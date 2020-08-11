@@ -25,16 +25,19 @@ def refreshTree(basedir="webtoon"):
         elif zipfile.is_zipfile(dpath):
             item = tree.AddRootItem(d)
             with zipfile.ZipFile(dpath) as zf:
-                for f in zf.namelist():
-                    if not f.endswith('/'):
-                        tree.AddItem(f,item)
+                for info in zf.infolist():
+                    if not info.filename.endswith('/'):
+                        #tree.AddItem(f,item)
+                        tree.AddItem(info.filename.decode("cp949"),item)
 
 def onTreeView(event):
     tree = ez.GetControl('tree')
-    path = tree.GetItemPath(tree.GetParentItem(tree.GetSelectedItem()))  
-    if zipfile.is_zipfile(path):
+    if tree.IsRootItem(tree.GetSelectedItem()):
+        return
+    path = tree.GetItemPath(tree.GetParentItem(tree.GetSelectedItem()))    
+    if path and zipfile.is_zipfile(path):
         with zipfile.ZipFile(path) as zf:
-            with zf.open(tree.GetSelectedItemText()) as f:
+            with zf.open(tree.GetSelectedItemText().encode("cp949")) as f:
                 web = ez.GetControl('web')
                 web.Load(f.read())
     else:
@@ -52,14 +55,14 @@ def onClosing(event):
     if not ez.YesNoDialog("Do you want to quie ?","Quit"):
         event.args.Cancel = True
 
-split1 = [[ { "name" : "TreeView", "label" : "WebToon", "key" : "tree", 'handler' : onTreeView,"expand" : True },
+split1 = [[ { "name" : "TreeView", "label" : "WebToon", "key" : "tree", 'handler' : onTreeView, 'fontsize':14, "expand" : True },
           { "expand" : True }, ]]
 split2 = [[ { "name" : "WebView", "key" : "web", "expand" : True, "toolbar" : False, "uri" : "http://google.co.kr" },   
         { "expand" : True }, ]]
 
 app_content = [ # vbox  
     [ # hbox
-        { "name" : "HSplit", "items" : [ split1, split2 ] , "first" : 0.2, "expand" : True, 'border' : False},
+        { "name" : "HSplit", "items" : [ split1, split2 ] , "first" : 0.4, "expand" : True, 'border' : False},
         { "expand" : True, 'border' : True  },
     ],          
 ]
