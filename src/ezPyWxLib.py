@@ -235,7 +235,72 @@ class WxTextField(WxControl):
             break
     def appendValue(self,value):
         self.ctrl.AppendText(value)
-       
+
+class WxTreeView(WxControl):
+    def __init__(self,parent,h):
+        id = getId()
+        self.ctrl = wx.TreeCtrl( parent, id, wx.DefaultPosition, wx.DefaultSize, wx.TR_DEFAULT_STYLE )
+        if h.get('handler'):
+            self.ctrl.Bind( wx.EVT_TREE_SEL_CHANGED, h['handler'], id=id )
+        '''
+        if self.data is not None:
+            root = self.ctrl.AddRoot(self.data[0])
+            if type(self.data[1]) is list:
+                self.addItems(root,self.data[1])
+            if self.collapse is not True:
+                self.ctrl.ExpandAllChildren(root)
+        '''
+        self.root = self.AddRoot(h.get('label'))
+        item1 = self.AddItem(self.root,"item1")
+        item2 = self.AddItem(self.root,"item2")
+        self.AddItem(item1,"item1.1")
+        self.DefaultAction(h)
+        #if not h.get('collapse'):
+        #    self.ctrl.ExpandAllChildren(self.root)            
+    def AddRoot(self,label):
+        return self.ctrl.AddRoot(label)
+    def AddItem(self,parent,label):
+        #self.ctrl.ExpandAllChildren(self.root)            
+        return self.ctrl.AppendItem(parent,label)            
+    def addItems(self,parent,data):
+        node = None
+        for item in data:
+            if type(item) is list and node is not None:
+                self.addItems(node,item)
+            else: #list
+                node = self.ctrl.AppendItem(parent,item)
+        
+#
+# Container
+#
+
+class WxPanel():
+    def __init__(self,layout,parent=None):
+        self.ctrl = wx.Panel( parent, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+        self.sizer = makeLayout(layout,self.ctrl)
+        self.ctrl.SetSizer( self.sizer )
+        self.ctrl.Layout()
+ 
+class WxVerticalSpliter(WxControl):
+    def __init__(self,items,parent=None,expand=False,proportion=0):
+        self.ctrl = wx.SplitterWindow( parent, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D )
+        self.sashpos = h.get('first') if h.get('first') else 50
+        panel1 = WxPanel(h.get('items')[0], self.ctrl)
+        panel2 = WxPanel(h.get('items')[1], self.ctrl)
+        self.ctrl.SplitHorizontally( panel1.ctrl, panel2.ctrl, self.sashpos )
+
+class WxHorizontalSpliter(WxControl):
+    def __init__(self,parent,h): #items,parent=None,expand=False,proportion=0):
+        self.ctrl = wx.SplitterWindow( parent, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_3D )
+        self.sashpos = h.get('first') if h.get('first') else 50
+        panel1 = WxPanel(h.get('items')[0], self.ctrl)
+        panel2 = WxPanel(h.get('items')[1], self.ctrl)
+        self.ctrl.SplitVertically( panel1.ctrl, panel2.ctrl, self.sashpos )
+
+#
+# Windows Function
+#
+
 def makeLayout(content,parent):
     vbox = WxVBox(parent)
     for v in content:
@@ -253,23 +318,15 @@ def makeLayout(content,parent):
             elif name == 'Label': f = WxLabel(parent,h)
             elif name == 'TextArea': f = WxTextArea(parent,h)
             elif name == 'TextField': f = WxTextField(parent,h)
+            elif name == 'Tree': f = WxTreeView(parent,h)
+            elif name == 'HSplit': f = WxHorizontalSpliter(parent,h)
+            elif name == 'VSplit': f = WxVerticalSpliter(parent,h)
             else: continue
             prop = 1 if h.get('expand') else 0
             hbox.addItem(f.ctrl,proportion=prop)
         prop = 1 if h.get('expand') else 0
         vbox.addItem(hbox.ctrl,proportion=prop,expand=expand)
     return vbox.ctrl
-
-class WxPanel():
-    def __init__(self,layout,parent=None):
-        self.ctrl = wx.Panel( parent, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-        self.sizer = makeLayout(layout,self.ctrl)
-        self.ctrl.SetSizer( self.sizer )
-        self.ctrl.Layout()
- 
-#
-# Windows Function
-#
 
 def getHandler(handler):
     def eventHandler(event):
@@ -304,9 +361,11 @@ class Timer():
         
 class Window():  
     def __init__(self,title="",width=800,height=600):
+        print(1)
         self.app = wx.App()
         self.app.locale = wx.Locale(wx.Locale.GetSystemLanguage())
         self.frame = wx.Frame(None, id = wx.ID_ANY, title = title, pos = wx.DefaultPosition, size = wx.Size( width,height ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+        print(2)
         self.ctrl = self.frame
         self.createdHandler = None
         self.closeHandler = None
@@ -317,6 +376,7 @@ class Window():
         self.content = None
         self.frame.Center();
         self.frame.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+        print(10)
         
     def Run(self):
         self.frame.Show()
@@ -460,13 +520,21 @@ tool_table =  [ #icon, text, handler
     [wx.ART_FLOPPY, None, "Save", ],    # Disabled toolbar item
 ]
 
+split1 = [[
+        { "name" : "Tree", 'label' : "Root", "key" : "tree", "expand" : True, "menu" : menu_table },
+        { "expand" : True }, ]]
+        
+split2 = [[ 
+        { "name" : "TextArea", "key" : "text", "expand" : True, "menu" : menu_table },
+        { "expand" : True }, ]]
+
 layout_table = [ # vbox
     [ # hbox
         { "name" : "Label", "label" : "Address:", "menu" : menu_table, 'expand' : False },
         { "name" : "TextField", "key" : "textfile", "expand" : True, "menu" : menu_table },
         { "name" : "Button", 'handler' : onExit, "label" : "File", "tooltip" : "About this program" },
-    ], [ # hbox
-        { "name" : "TextArea", "key" : "text", "expand" : True, "menu" : menu_table },
+    ], [ # hbox        
+        { "name" : "HSplit", 'items' : [ split1, split2 ], 'first':200, "expand" : True, "menu" : menu_table },
     ],    
 ]
 
@@ -488,5 +556,4 @@ if __name__ == "__main__":
     global appWin
     appWin = MakeWindow()
     appWin.Run()
-
 
