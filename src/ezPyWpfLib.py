@@ -94,6 +94,7 @@ class WpfControl():
         if h.get('width'): self.ctrl.Width = h['width']
         if h.get('height'): self.ctrl.Height = h['height']
         if h.get('drop'): self.SetFileDropHandler(h['drop'])
+        if h.get('fontsize'): self.ctrl.FontSize = h['fontsize']
         if self.ctrl.Margin: self.ctrl.Margin  = Thickness(5)
         try:
             if self.ctrl.Padding: self.ctrl.Padding = Thickness(1)
@@ -429,6 +430,8 @@ class WpfTreeView(WpfControl):
         return item.Parent
     def GetItemValue(self,item):
         return item.ToString()
+    def IsRootItem(self,item):
+        return type(item.Parent) == TreeView
 
 class WpfWebView(WpfControl):
     def __init__(self,h):
