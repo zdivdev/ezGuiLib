@@ -330,6 +330,10 @@ class WpfTableView(WpfControl):
         self.ctrl.ItemsSource = self.table.DefaultView
         self.ctrl.AddHandler(GridViewColumnHeader.ClickEvent, RoutedEventHandler(self.OnColumnHeaderClick))
         self.sort_dir = ListSortDirection.Ascending
+    def Clear(self):
+        self.table.Clear()
+    def Select(self):
+        return self.table.Select()
     def AddColumn(self,name,width=None,label=None):
         col = GridViewColumn()
         if width: col.Width = width
@@ -847,13 +851,6 @@ def WpfLayout(content):
 #
 # Thread, Execute
 #
-
-'''
-def RunLater(handler):
-    from System import Action
-    System.Windows.Threading.DispatcherExtensions.BeginInvoke(
-        System.Windows.Threading.Dispatcher.CurrentDispatcher, Action(handler))
-'''
 
 def RunLater(ctrl,handler):
     ctrl.Dispatcher.BeginInvoke(System.Action(handler))
