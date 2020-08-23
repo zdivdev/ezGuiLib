@@ -411,7 +411,7 @@ class WpfTreeView(WpfControl):
     def AddItem(self,label,parent=None):
         item = TreeViewItem()
         item.Header = label
-        item.IsExpanded = True
+        item.IsExpanded = False
         if parent: parent.Items.Add(item)
         else: self.root.Items.Add(item)
         return item
@@ -474,7 +474,11 @@ class WpfWebView(WpfControl):
     def BackHandler(self,sender,args): self.Back()
     def ForwardHandler(self,sender,args): self.Forward()
     def RefreshHandler(self,sender,args): self.Refresh()
-    def Load(self,html): self.web.NavigateToString(html);
+    def Load(self,html): 
+        self.web.NavigateToString(html);
+    def LoadFile(self,path):
+        uri = "file:///" + path;
+        self.web.Navigate(System.Uri(uri, System.UriKind.RelativeOrAbsolute));
     def Go(self,uri): self.web.Navigate(System.Uri(uri, System.UriKind.RelativeOrAbsolute));
     def Back(self):
         if self.web.CanGoBack: self.web.GoBack()
